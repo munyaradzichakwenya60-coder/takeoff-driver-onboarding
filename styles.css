@@ -278,9 +278,10 @@ body {
   width: 100%;
   max-width: 540px;
   height: 100vh;
-  background: #0F172A;
-  color: #F8FAFC;
-  box-shadow: -15px 0 40px rgba(0, 0, 0, 0.3);
+  background: #F8FAFC;
+  color: #0F172A;
+  border-left: 1px solid #E2E8F0;
+  box-shadow: -15px 0 40px rgba(15, 23, 42, 0.15);
   z-index: 50;
   transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;

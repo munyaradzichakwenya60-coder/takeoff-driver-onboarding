@@ -300,11 +300,11 @@ class OnboardingState {
 
     if (filtered.length === 0) {
       container.innerHTML = `
-        <div class='text-center py-16 text-slate-400'>
-          <div class='w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center mx-auto mb-3 text-slate-400'>
-            <i data-lucide='search' class='w-6 h-6'></i>
+        <div class='text-center py-16 text-slate-500'>
+          <div class='w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center mx-auto mb-3 text-slate-400 shadow-sm'>
+            <i data-lucide='search' class='w-6 h-6 text-slate-400'></i>
           </div>
-          <p class='font-bold text-slate-300 text-sm'>No driver applications match your query</p>
+          <p class='font-bold text-slate-800 text-sm'>No driver applications match your query</p>
           <p class='text-xs text-slate-500 mt-1'>Try searching by name, vehicle, or phone.</p>
         </div>
       `;
@@ -314,44 +314,53 @@ class OnboardingState {
 
     container.innerHTML = filtered.map(p => {
       const iconName = this.getVehicleIcon(p.vehicle.type);
+      const isApproved = p.status === 'Approved';
+      const isReview = p.status === 'Under Review';
+      
+      const statusBadge = isApproved 
+        ? `<span class='px-3 py-1 text-[11px] font-extrabold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-xs'>Approved</span>`
+        : isReview 
+        ? `<span class='px-3 py-1 text-[11px] font-extrabold rounded-full bg-amber-100 text-amber-900 border border-amber-300 shadow-xs'>Under Review</span>`
+        : `<span class='px-3 py-1 text-[11px] font-extrabold rounded-full bg-rose-100 text-rose-900 border border-rose-300 shadow-xs'>Rejected</span>`;
+
       return `
-        <div class='bg-slate-900/90 border border-slate-800 rounded-2xl p-4 transition hover:border-emerald-500/50 shadow-sm'>
-          <div class='flex items-center justify-between mb-2.5'>
-            <div class='flex items-center gap-2.5'>
-              <div class='w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20'>
-                <i data-lucide='${iconName}' class='w-4 h-4'></i>
+        <div class='bg-white border border-slate-200 rounded-2xl p-4 transition hover:border-emerald-500 hover:shadow-md shadow-xs'>
+          <div class='flex items-center justify-between mb-3'>
+            <div class='flex items-center gap-3'>
+              <div class='w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200 font-bold'>
+                <i data-lucide='${iconName}' class='w-5 h-5 text-emerald-600'></i>
               </div>
               <div>
-                <h4 class='font-bold text-white text-sm'>${p.personal.fullName}</h4>
-                <p class='text-[11px] text-slate-400'>${p.personal.phone} · ${p.personal.city.split(' ')[0]}</p>
+                <h4 class='font-black text-slate-900 text-sm tracking-tight'>${p.personal.fullName}</h4>
+                <p class='text-xs font-semibold text-slate-600 mt-0.5'>${p.personal.phone} · ${p.personal.city.split(' ')[0]}</p>
               </div>
             </div>
-            <span class='px-2.5 py-0.5 text-[11px] font-bold rounded-full ${
-              p.status === 'Approved' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' :
-              p.status === 'Under Review' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' :
-              'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-            }'>
-              ${p.status}
-            </span>
+            ${statusBadge}
           </div>
 
-          <div class='grid grid-cols-2 gap-2 text-[11px] text-slate-300 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 my-2.5'>
-            <div><span class='text-slate-500'>Ref ID:</span> <span class='font-mono text-emerald-400 font-bold'>${p.id}</span></div>
-            <div><span class='text-slate-500'>Vehicle:</span> ${p.vehicle.make} ${p.vehicle.model}</div>
-            <div><span class='text-slate-500'>Plate:</span> <span class='font-mono uppercase font-semibold'>${p.vehicle.plate}</span></div>
-            <div><span class='text-slate-500'>License:</span> ${p.documents.licenseNumber}</div>
+          <div class='grid grid-cols-2 gap-2 text-xs bg-slate-50 p-3 rounded-xl border border-slate-200/90 my-2.5'>
+            <div><span class='text-slate-500 font-bold'>Ref ID:</span> <span class='font-mono font-black text-emerald-700'>${p.id}</span></div>
+            <div><span class='text-slate-500 font-bold'>Vehicle:</span> <span class='font-bold text-slate-900'>${p.vehicle.make} ${p.vehicle.model}</span></div>
+            <div><span class='text-slate-500 font-bold'>Plate:</span> <span class='font-mono font-black text-slate-900 uppercase'>${p.vehicle.plate}</span></div>
+            <div><span class='text-slate-500 font-bold'>License:</span> <span class='font-mono font-bold text-slate-900'>${p.documents.licenseNumber}</span></div>
           </div>
 
-          <div class='flex items-center justify-between pt-1 border-t border-slate-800/60 mt-2'>
-            <span class='text-[10px] text-slate-500 font-mono'>Submitted ${new Date(p.timestamp).toLocaleDateString()}</span>
-            <div class='flex items-center gap-1.5'>
-              <button onclick="window.app.updateStatus('${p.id}', 'Approved')" class='px-2.5 py-1 text-[10px] font-bold rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30 transition flex items-center gap-1'>
-                <i data-lucide='check' class='w-3 h-3'></i>
-                <span>Approve</span>
-              </button>
-              <button onclick="window.app.viewProfileDetails('${p.id}')" class='px-2.5 py-1 text-[10px] font-bold rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 transition flex items-center gap-1'>
+          <div class='flex items-center justify-between pt-2 border-t border-slate-100 mt-2'>
+            <span class='text-xs text-slate-500 font-semibold'>Submitted ${new Date(p.timestamp).toLocaleDateString()}</span>
+            <div class='flex items-center gap-2'>
+              ${!isApproved ? `
+                <button onclick="window.app.updateStatus('${p.id}', 'Approved')" class='px-3 py-1.5 text-xs font-extrabold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition flex items-center gap-1'>
+                  <i data-lucide='check' class='w-3.5 h-3.5'></i>
+                  <span>Approve</span>
+                </button>
+              ` : `
+                <button onclick="window.app.updateStatus('${p.id}', 'Under Review')" class='px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition'>
+                  <span>Review</span>
+                </button>
+              `}
+              <button onclick="window.app.viewProfileDetails('${p.id}')" class='px-3 py-1.5 text-xs font-extrabold rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-xs transition flex items-center gap-1'>
                 <span>Details</span>
-                <i data-lucide='chevron-right' class='w-3 h-3'></i>
+                <i data-lucide='chevron-right' class='w-3.5 h-3.5'></i>
               </button>
             </div>
           </div>
@@ -373,103 +382,103 @@ class OnboardingState {
     if (!modal) {
       modal = document.createElement('div');
       modal.id = 'profile-detail-modal';
-      modal.className = 'absolute inset-0 bg-slate-900 z-30 flex flex-col overflow-y-auto p-5 animate-step';
+      modal.className = 'absolute inset-0 bg-white z-30 flex flex-col overflow-y-auto p-5 animate-step text-slate-900';
       drawer.appendChild(modal);
     }
 
     modal.innerHTML = `
-      <div class='flex items-center justify-between pb-4 border-b border-slate-800 mb-4'>
+      <div class='flex items-center justify-between pb-4 border-b border-slate-200 mb-4'>
         <div>
-          <span class='text-[10px] font-mono font-bold uppercase text-emerald-400'>${p.id}</span>
-          <h3 class='text-base font-extrabold text-white'>${p.personal.fullName}</h3>
+          <span class='text-xs font-mono font-black uppercase text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md'>${p.id}</span>
+          <h3 class='text-lg font-black text-slate-900 mt-1'>${p.personal.fullName}</h3>
         </div>
-        <button onclick="document.getElementById('profile-detail-modal').remove(); window.app.activeProfileModal = null;" class='w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300'>
+        <button onclick="document.getElementById('profile-detail-modal').remove(); window.app.activeProfileModal = null;" class='w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-700 transition'>
           <i data-lucide='x' class='w-4 h-4'></i>
         </button>
       </div>
 
-      <div class='space-y-4 text-xs text-slate-300'>
+      <div class='space-y-4 text-xs text-slate-700'>
         <!-- Status Bar -->
-        <div class='bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between'>
+        <div class='bg-slate-50 p-3.5 rounded-2xl border border-slate-200 flex items-center justify-between'>
           <div>
-            <span class='text-[10px] text-slate-500 uppercase block font-bold'>Current Status</span>
-            <span class='font-bold text-sm ${p.status === 'Approved' ? 'text-emerald-400' : 'text-amber-400'}'>${p.status}</span>
+            <span class='text-[10px] text-slate-500 uppercase block font-bold'>Application Status</span>
+            <span class='font-black text-sm ${p.status === 'Approved' ? 'text-emerald-700' : 'text-amber-700'}'>${p.status}</span>
           </div>
           <div class='flex gap-1.5'>
-            <button onclick="window.app.updateStatus('${p.id}', 'Approved')" class='px-3 py-1.5 bg-emerald-600 text-white rounded-lg font-bold text-[11px] hover:bg-emerald-500 transition flex items-center gap-1'>
-              <i data-lucide='check' class='w-3 h-3'></i>
+            <button onclick="window.app.updateStatus('${p.id}', 'Approved')" class='px-3 py-1.5 bg-emerald-600 text-white rounded-xl font-bold text-xs hover:bg-emerald-700 transition flex items-center gap-1 shadow-xs'>
+              <i data-lucide='check' class='w-3.5 h-3.5'></i>
               <span>Approve</span>
             </button>
-            <button onclick="window.app.updateStatus('${p.id}', 'Under Review')" class='px-3 py-1.5 bg-amber-600 text-white rounded-lg font-bold text-[11px] hover:bg-amber-500 transition'>Review</button>
-            <button onclick="window.app.updateStatus('${p.id}', 'Rejected')" class='px-3 py-1.5 bg-rose-600 text-white rounded-lg font-bold text-[11px] hover:bg-rose-500 transition'>Reject</button>
+            <button onclick="window.app.updateStatus('${p.id}', 'Under Review')" class='px-3 py-1.5 bg-amber-500 text-white rounded-xl font-bold text-xs hover:bg-amber-600 transition'>Review</button>
+            <button onclick="window.app.updateStatus('${p.id}', 'Rejected')" class='px-3 py-1.5 bg-rose-600 text-white rounded-xl font-bold text-xs hover:bg-rose-700 transition'>Reject</button>
           </div>
         </div>
 
         <!-- Personal Details -->
-        <div class='bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/60'>
-          <div class='flex items-center gap-1.5 text-emerald-400 text-[11px] font-bold uppercase mb-2'>
-            <i data-lucide='user' class='w-3.5 h-3.5'></i>
-            <span>1. Personal & Contact</span>
+        <div class='bg-white p-4 rounded-2xl border border-slate-200 shadow-xs'>
+          <div class='flex items-center gap-2 text-slate-900 text-xs font-black uppercase mb-3'>
+            <i data-lucide='user' class='w-4 h-4 text-emerald-600'></i>
+            <span>1. Personal & Contact Information</span>
           </div>
-          <div class='grid grid-cols-2 gap-2 text-[11px]'>
-            <div><span class='text-slate-500'>Phone:</span> <p class='text-white font-bold'>${p.personal.phone}</p></div>
-            <div><span class='text-slate-500'>Email:</span> <p class='text-white font-bold'>${p.personal.email}</p></div>
-            <div><span class='text-slate-500'>City:</span> <p class='text-white'>${p.personal.city}</p></div>
-            <div><span class='text-slate-500'>DOB:</span> <p class='text-white'>${p.personal.dob || '1998-06-15'}</p></div>
-            <div class='col-span-2'><span class='text-slate-500'>Emergency Contact:</span> <p class='text-white'>${p.personal.emergencyName} (${p.personal.emergencyPhone})</p></div>
+          <div class='grid grid-cols-2 gap-2.5 text-xs'>
+            <div><span class='text-slate-500 font-bold'>Phone:</span> <p class='text-slate-900 font-extrabold mt-0.5'>${p.personal.phone}</p></div>
+            <div><span class='text-slate-500 font-bold'>Email:</span> <p class='text-slate-900 font-extrabold mt-0.5'>${p.personal.email}</p></div>
+            <div><span class='text-slate-500 font-bold'>City:</span> <p class='text-slate-900 font-bold mt-0.5'>${p.personal.city}</p></div>
+            <div><span class='text-slate-500 font-bold'>DOB:</span> <p class='text-slate-900 font-bold mt-0.5'>${p.personal.dob || '1998-06-15'}</p></div>
+            <div class='col-span-2'><span class='text-slate-500 font-bold'>Emergency Contact:</span> <p class='text-slate-900 font-bold mt-0.5'>${p.personal.emergencyName} (${p.personal.emergencyPhone})</p></div>
           </div>
         </div>
 
         <!-- Vehicle Information -->
-        <div class='bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/60'>
-          <div class='flex items-center gap-1.5 text-emerald-400 text-[11px] font-bold uppercase mb-2'>
-            <i data-lucide='${iconName}' class='w-3.5 h-3.5'></i>
+        <div class='bg-white p-4 rounded-2xl border border-slate-200 shadow-xs'>
+          <div class='flex items-center gap-2 text-slate-900 text-xs font-black uppercase mb-3'>
+            <i data-lucide='${iconName}' class='w-4 h-4 text-emerald-600'></i>
             <span>2. Vehicle & Fleet Specs</span>
           </div>
-          <div class='grid grid-cols-2 gap-2 text-[11px]'>
-            <div><span class='text-slate-500'>Vehicle Type:</span> <p class='text-white font-bold'>${p.vehicle.type}</p></div>
-            <div><span class='text-slate-500'>Plate:</span> <p class='text-white font-mono font-bold uppercase'>${p.vehicle.plate}</p></div>
-            <div><span class='text-slate-500'>Make/Model:</span> <p class='text-white'>${p.vehicle.make} ${p.vehicle.model}</p></div>
-            <div><span class='text-slate-500'>Year/Color:</span> <p class='text-white'>${p.vehicle.year || '2023'} · ${p.vehicle.color || 'Standard'}</p></div>
+          <div class='grid grid-cols-2 gap-2.5 text-xs'>
+            <div><span class='text-slate-500 font-bold'>Vehicle Type:</span> <p class='text-slate-900 font-black mt-0.5'>${p.vehicle.type}</p></div>
+            <div><span class='text-slate-500 font-bold'>Plate:</span> <p class='text-slate-900 font-mono font-black uppercase mt-0.5'>${p.vehicle.plate}</p></div>
+            <div><span class='text-slate-500 font-bold'>Make & Model:</span> <p class='text-slate-900 font-bold mt-0.5'>${p.vehicle.make} ${p.vehicle.model}</p></div>
+            <div><span class='text-slate-500 font-bold'>Year / Color:</span> <p class='text-slate-900 font-bold mt-0.5'>${p.vehicle.year || '2023'} · ${p.vehicle.color || 'Standard'}</p></div>
           </div>
         </div>
 
         <!-- Verified Documents & Compliance -->
-        <div class='bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/60'>
-          <div class='flex items-center gap-1.5 text-emerald-400 text-[11px] font-bold uppercase mb-2'>
-            <i data-lucide='shield-check' class='w-3.5 h-3.5'></i>
+        <div class='bg-white p-4 rounded-2xl border border-slate-200 shadow-xs'>
+          <div class='flex items-center gap-2 text-slate-900 text-xs font-black uppercase mb-3'>
+            <i data-lucide='shield-check' class='w-4 h-4 text-emerald-600'></i>
             <span>3. Documents & Compliance</span>
           </div>
-          <div class='space-y-2 text-[11px]'>
-            <div class='flex items-center justify-between p-2 bg-slate-900/80 rounded-lg'>
-              <div class='flex items-center gap-2'>
-                <i data-lucide='credit-card' class='w-4 h-4 text-emerald-400'></i>
+          <div class='space-y-2.5 text-xs'>
+            <div class='flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200'>
+              <div class='flex items-center gap-3'>
+                <i data-lucide='credit-card' class='w-4 h-4 text-emerald-600'></i>
                 <div>
-                  <p class='font-bold text-white'>National ID (${p.identity.idNumber})</p>
-                  <p class='text-[10px] text-emerald-400'>Biometric OCR verified · ${p.identity.compressionSize || '342 KB'}</p>
+                  <p class='font-bold text-slate-900'>National ID (${p.identity.idNumber})</p>
+                  <p class='text-[11px] text-slate-600 font-medium'>Biometric OCR verified · ${p.identity.compressionSize || '342 KB'}</p>
                 </div>
               </div>
-              <span class='text-emerald-400 font-bold'>Verified</span>
+              <span class='text-xs font-extrabold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full'>Verified</span>
             </div>
-            <div class='flex items-center justify-between p-2 bg-slate-900/80 rounded-lg'>
-              <div class='flex items-center gap-2'>
-                <i data-lucide='file-badge' class='w-4 h-4 text-emerald-400'></i>
+            <div class='flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200'>
+              <div class='flex items-center gap-3'>
+                <i data-lucide='file-badge' class='w-4 h-4 text-emerald-600'></i>
                 <div>
-                  <p class='font-bold text-white'>Driver License (${p.documents.licenseNumber})</p>
-                  <p class='text-[10px] text-emerald-400'>${p.documents.licenseClass} · Valid until ${p.documents.expiry || '2028'}</p>
+                  <p class='font-bold text-slate-900'>Driver License (${p.documents.licenseNumber})</p>
+                  <p class='text-[11px] text-slate-600 font-medium'>${p.documents.licenseClass} · Valid until ${p.documents.expiry || '2028'}</p>
                 </div>
               </div>
-              <span class='text-emerald-400 font-bold'>Active</span>
+              <span class='text-xs font-extrabold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full'>Active</span>
             </div>
-            <div class='flex items-center justify-between p-2 bg-slate-900/80 rounded-lg'>
-              <div class='flex items-center gap-2'>
-                <i data-lucide='shield' class='w-4 h-4 text-emerald-400'></i>
+            <div class='flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200'>
+              <div class='flex items-center gap-3'>
+                <i data-lucide='shield' class='w-4 h-4 text-emerald-600'></i>
                 <div>
-                  <p class='font-bold text-white'>Road Insurance Policy</p>
-                  <p class='text-[10px] text-emerald-400'>Policy #${p.documents.insurancePolicy}</p>
+                  <p class='font-bold text-slate-900'>Road Insurance Policy</p>
+                  <p class='text-[11px] text-slate-600 font-medium'>Policy #${p.documents.insurancePolicy}</p>
                 </div>
               </div>
-              <span class='text-emerald-400 font-bold'>Active</span>
+              <span class='text-xs font-extrabold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full'>Active</span>
             </div>
           </div>
         </div>

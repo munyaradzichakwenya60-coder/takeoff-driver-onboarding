@@ -867,13 +867,13 @@ class OnboardingState {
                     </div>
                     <div class='text-left'>
                       <p class='text-xs font-bold text-slate-800'>national_id_front.webp</p>
-                      <p class='text-[10px] text-emerald-600 font-semibold flex items-center gap-1'>
-                        <i data-lucide='check' class='w-3 h-3'></i>
-                        <span>Auto-Compressed (342 KB) · OCR Verified</span>
+                      <p class='text-[11px] text-slate-800 font-semibold flex items-center gap-1 mt-0.5'>
+                        <i data-lucide='check' class='w-3.5 h-3.5 text-emerald-600'></i>
+                        <span class='text-slate-900 font-medium'>Auto-Compressed (342 KB) · OCR Verified</span>
                       </p>
                     </div>
                   </div>
-                  <span class='text-xs text-emerald-600 font-bold'>Uploaded</span>
+                  <span class='text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-slate-900 text-white shadow-xs'>Uploaded</span>
                 </div>
               </div>
             </div>
@@ -889,13 +889,13 @@ class OnboardingState {
                     </div>
                     <div class='text-left'>
                       <p class='text-xs font-bold text-slate-800'>national_id_back.webp</p>
-                      <p class='text-[10px] text-emerald-600 font-semibold flex items-center gap-1'>
-                        <i data-lucide='check' class='w-3 h-3'></i>
-                        <span>Auto-Compressed (289 KB) · Barcode Matched</span>
+                      <p class='text-[11px] text-slate-800 font-semibold flex items-center gap-1 mt-0.5'>
+                        <i data-lucide='check' class='w-3.5 h-3.5 text-emerald-600'></i>
+                        <span class='text-slate-900 font-medium'>Auto-Compressed (289 KB) · Barcode Matched</span>
                       </p>
                     </div>
                   </div>
-                  <span class='text-xs text-emerald-600 font-bold'>Uploaded</span>
+                  <span class='text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-slate-900 text-white shadow-xs'>Uploaded</span>
                 </div>
               </div>
             </div>
@@ -1054,13 +1054,13 @@ class OnboardingState {
                     </div>
                     <div class='text-left'>
                       <p class='text-xs font-bold text-slate-800'>driver_license_scan.webp</p>
-                      <p class='text-[10px] text-emerald-600 font-semibold flex items-center gap-1'>
-                        <i data-lucide='check' class='w-3 h-3'></i>
-                        <span>Verified · Valid until 2028</span>
+                      <p class='text-[11px] text-slate-800 font-semibold flex items-center gap-1 mt-0.5'>
+                        <i data-lucide='check' class='w-3.5 h-3.5 text-emerald-600'></i>
+                        <span class='text-slate-900 font-medium'>Verified · Valid until 2028</span>
                       </p>
                     </div>
                   </div>
-                  <span class='text-xs text-emerald-600 font-bold'>Uploaded</span>
+                  <span class='text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-slate-900 text-white shadow-xs'>Uploaded</span>
                 </div>
               </div>
             </div>
@@ -1075,13 +1075,13 @@ class OnboardingState {
                     </div>
                     <div class='text-left'>
                       <p class='text-xs font-bold text-slate-800'>zimnat_third_party_cert.pdf</p>
-                      <p class='text-[10px] text-emerald-600 font-semibold flex items-center gap-1'>
-                        <i data-lucide='check' class='w-3 h-3'></i>
-                        <span>Policy active · Policy #ZIMNAT-94821</span>
+                      <p class='text-[11px] text-slate-800 font-semibold flex items-center gap-1 mt-0.5'>
+                        <i data-lucide='check' class='w-3.5 h-3.5 text-emerald-600'></i>
+                        <span class='text-slate-900 font-medium'>Policy active · Policy #ZIMNAT-94821</span>
                       </p>
                     </div>
                   </div>
-                  <span class='text-xs text-emerald-600 font-bold'>Uploaded</span>
+                  <span class='text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-slate-900 text-white shadow-xs'>Uploaded</span>
                 </div>
               </div>
             </div>

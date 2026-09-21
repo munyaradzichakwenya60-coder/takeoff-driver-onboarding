@@ -30,7 +30,7 @@ const INITIAL_PROFILES = [
     },
     vehicle: {
       type: 'Motorbike',
-      icon: '🛵',
+      iconName: 'bike',
       make: 'Honda',
       model: 'Ace 125',
       year: '2022',
@@ -71,7 +71,7 @@ const INITIAL_PROFILES = [
     },
     vehicle: {
       type: 'Delivery Van',
-      icon: '🚐',
+      iconName: 'truck',
       make: 'Toyota',
       model: 'HiAce Commuter',
       year: '2019',
@@ -99,9 +99,6 @@ class OnboardingState {
     this.timerInterval = null;
     this.fullWidth = false;
     this.activeProfileModal = null;
-    this.isDrawing = false;
-    this.sigCanvas = null;
-    this.sigCtx = null;
 
     // Active Application Draft (Preloaded with registered candidate details)
     this.draft = {
@@ -277,6 +274,16 @@ class OnboardingState {
     }
   }
 
+  getVehicleIcon(type) {
+    switch (type) {
+      case 'Motorbike': return 'bike';
+      case 'Courier Car': return 'car';
+      case 'Delivery Van': return 'truck';
+      case 'Cargo Truck': return 'container';
+      default: return 'car';
+    }
+  }
+
   renderReviewerList(filter = '') {
     const container = document.getElementById('reviewer-profiles-container');
     if (!container) return;
@@ -294,57 +301,72 @@ class OnboardingState {
     if (filtered.length === 0) {
       container.innerHTML = `
         <div class='text-center py-16 text-slate-400'>
-          <div class='text-4xl mb-3'>🔍</div>
+          <div class='w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center mx-auto mb-3 text-slate-400'>
+            <i data-lucide='search' class='w-6 h-6'></i>
+          </div>
           <p class='font-bold text-slate-300 text-sm'>No driver applications match your query</p>
           <p class='text-xs text-slate-500 mt-1'>Try searching by name, vehicle, or phone.</p>
         </div>
       `;
+      if (window.lucide) window.lucide.createIcons();
       return;
     }
 
-    container.innerHTML = filtered.map(p => `
-      <div class='bg-slate-900/90 border border-slate-800 rounded-2xl p-4 transition hover:border-emerald-500/50 shadow-sm'>
-        <div class='flex items-center justify-between mb-2.5'>
-          <div class='flex items-center gap-2.5'>
-            <span class='text-2xl'>${p.vehicle.icon || '🛵'}</span>
-            <div>
-              <h4 class='font-bold text-white text-sm'>${p.personal.fullName}</h4>
-              <p class='text-[11px] text-slate-400'>${p.personal.phone} · ${p.personal.city.split(' ')[0]}</p>
+    container.innerHTML = filtered.map(p => {
+      const iconName = this.getVehicleIcon(p.vehicle.type);
+      return `
+        <div class='bg-slate-900/90 border border-slate-800 rounded-2xl p-4 transition hover:border-emerald-500/50 shadow-sm'>
+          <div class='flex items-center justify-between mb-2.5'>
+            <div class='flex items-center gap-2.5'>
+              <div class='w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20'>
+                <i data-lucide='${iconName}' class='w-4 h-4'></i>
+              </div>
+              <div>
+                <h4 class='font-bold text-white text-sm'>${p.personal.fullName}</h4>
+                <p class='text-[11px] text-slate-400'>${p.personal.phone} · ${p.personal.city.split(' ')[0]}</p>
+              </div>
+            </div>
+            <span class='px-2.5 py-0.5 text-[11px] font-bold rounded-full ${
+              p.status === 'Approved' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' :
+              p.status === 'Under Review' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' :
+              'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+            }'>
+              ${p.status}
+            </span>
+          </div>
+
+          <div class='grid grid-cols-2 gap-2 text-[11px] text-slate-300 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 my-2.5'>
+            <div><span class='text-slate-500'>Ref ID:</span> <span class='font-mono text-emerald-400 font-bold'>${p.id}</span></div>
+            <div><span class='text-slate-500'>Vehicle:</span> ${p.vehicle.make} ${p.vehicle.model}</div>
+            <div><span class='text-slate-500'>Plate:</span> <span class='font-mono uppercase font-semibold'>${p.vehicle.plate}</span></div>
+            <div><span class='text-slate-500'>License:</span> ${p.documents.licenseNumber}</div>
+          </div>
+
+          <div class='flex items-center justify-between pt-1 border-t border-slate-800/60 mt-2'>
+            <span class='text-[10px] text-slate-500 font-mono'>Submitted ${new Date(p.timestamp).toLocaleDateString()}</span>
+            <div class='flex items-center gap-1.5'>
+              <button onclick="window.app.updateStatus('${p.id}', 'Approved')" class='px-2.5 py-1 text-[10px] font-bold rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30 transition flex items-center gap-1'>
+                <i data-lucide='check' class='w-3 h-3'></i>
+                <span>Approve</span>
+              </button>
+              <button onclick="window.app.viewProfileDetails('${p.id}')" class='px-2.5 py-1 text-[10px] font-bold rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 transition flex items-center gap-1'>
+                <span>Details</span>
+                <i data-lucide='chevron-right' class='w-3 h-3'></i>
+              </button>
             </div>
           </div>
-          <span class='px-2.5 py-0.5 text-[11px] font-bold rounded-full ${
-            p.status === 'Approved' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' :
-            p.status === 'Under Review' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' :
-            'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-          }'>
-            ${p.status}
-          </span>
         </div>
+      `;
+    }).join('');
 
-        <div class='grid grid-cols-2 gap-2 text-[11px] text-slate-300 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 my-2.5'>
-          <div><span class='text-slate-500'>Ref ID:</span> <span class='font-mono text-emerald-400 font-bold'>${p.id}</span></div>
-          <div><span class='text-slate-500'>Vehicle:</span> ${p.vehicle.make} ${p.vehicle.model}</div>
-          <div><span class='text-slate-500'>Plate:</span> <span class='font-mono uppercase font-semibold'>${p.vehicle.plate}</span></div>
-          <div><span class='text-slate-500'>License:</span> ${p.documents.licenseNumber}</div>
-        </div>
-
-        <div class='flex items-center justify-between pt-1 border-t border-slate-800/60 mt-2'>
-          <span class='text-[10px] text-slate-500 font-mono'>Submitted ${new Date(p.timestamp).toLocaleDateString()}</span>
-          <div class='flex items-center gap-1.5'>
-            <button onclick="window.app.updateStatus('${p.id}', 'Approved')" class='px-2 py-1 text-[10px] font-bold rounded bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30 transition'>Approve</button>
-            <button onclick="window.app.viewProfileDetails('${p.id}')" class='px-2.5 py-1 text-[10px] font-bold rounded bg-slate-800 text-slate-200 hover:bg-slate-700 transition flex items-center gap-1'>
-              <span>Details</span> <span>→</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    `).join('');
+    if (window.lucide) window.lucide.createIcons();
   }
 
   viewProfileDetails(id) {
     const p = this.getProfiles().find(item => item.id === id);
     if (!p) return;
     this.activeProfileModal = id;
+    const iconName = this.getVehicleIcon(p.vehicle.type);
     
     const drawer = document.getElementById('reviewer-drawer');
     let modal = document.getElementById('profile-detail-modal');
@@ -361,7 +383,9 @@ class OnboardingState {
           <span class='text-[10px] font-mono font-bold uppercase text-emerald-400'>${p.id}</span>
           <h3 class='text-base font-extrabold text-white'>${p.personal.fullName}</h3>
         </div>
-        <button onclick="document.getElementById('profile-detail-modal').remove(); window.app.activeProfileModal = null;" class='w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300'>✕</button>
+        <button onclick="document.getElementById('profile-detail-modal').remove(); window.app.activeProfileModal = null;" class='w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300'>
+          <i data-lucide='x' class='w-4 h-4'></i>
+        </button>
       </div>
 
       <div class='space-y-4 text-xs text-slate-300'>
@@ -372,15 +396,21 @@ class OnboardingState {
             <span class='font-bold text-sm ${p.status === 'Approved' ? 'text-emerald-400' : 'text-amber-400'}'>${p.status}</span>
           </div>
           <div class='flex gap-1.5'>
-            <button onclick="window.app.updateStatus('${p.id}', 'Approved')" class='px-3 py-1 bg-emerald-600 text-white rounded-lg font-bold text-[11px] hover:bg-emerald-500 transition'>Approve</button>
-            <button onclick="window.app.updateStatus('${p.id}', 'Under Review')" class='px-3 py-1 bg-amber-600 text-white rounded-lg font-bold text-[11px] hover:bg-amber-500 transition'>Review</button>
-            <button onclick="window.app.updateStatus('${p.id}', 'Rejected')" class='px-3 py-1 bg-rose-600 text-white rounded-lg font-bold text-[11px] hover:bg-rose-500 transition'>Reject</button>
+            <button onclick="window.app.updateStatus('${p.id}', 'Approved')" class='px-3 py-1.5 bg-emerald-600 text-white rounded-lg font-bold text-[11px] hover:bg-emerald-500 transition flex items-center gap-1'>
+              <i data-lucide='check' class='w-3 h-3'></i>
+              <span>Approve</span>
+            </button>
+            <button onclick="window.app.updateStatus('${p.id}', 'Under Review')" class='px-3 py-1.5 bg-amber-600 text-white rounded-lg font-bold text-[11px] hover:bg-amber-500 transition'>Review</button>
+            <button onclick="window.app.updateStatus('${p.id}', 'Rejected')" class='px-3 py-1.5 bg-rose-600 text-white rounded-lg font-bold text-[11px] hover:bg-rose-500 transition'>Reject</button>
           </div>
         </div>
 
         <!-- Personal Details -->
         <div class='bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/60'>
-          <h4 class='text-[11px] font-bold text-emerald-400 uppercase mb-2'>1. Personal & Contact</h4>
+          <div class='flex items-center gap-1.5 text-emerald-400 text-[11px] font-bold uppercase mb-2'>
+            <i data-lucide='user' class='w-3.5 h-3.5'></i>
+            <span>1. Personal & Contact</span>
+          </div>
           <div class='grid grid-cols-2 gap-2 text-[11px]'>
             <div><span class='text-slate-500'>Phone:</span> <p class='text-white font-bold'>${p.personal.phone}</p></div>
             <div><span class='text-slate-500'>Email:</span> <p class='text-white font-bold'>${p.personal.email}</p></div>
@@ -392,9 +422,12 @@ class OnboardingState {
 
         <!-- Vehicle Information -->
         <div class='bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/60'>
-          <h4 class='text-[11px] font-bold text-emerald-400 uppercase mb-2'>2. Vehicle & Fleet Specs</h4>
+          <div class='flex items-center gap-1.5 text-emerald-400 text-[11px] font-bold uppercase mb-2'>
+            <i data-lucide='${iconName}' class='w-3.5 h-3.5'></i>
+            <span>2. Vehicle & Fleet Specs</span>
+          </div>
           <div class='grid grid-cols-2 gap-2 text-[11px]'>
-            <div><span class='text-slate-500'>Vehicle Type:</span> <p class='text-white font-bold'>${p.vehicle.type} ${p.vehicle.icon || ''}</p></div>
+            <div><span class='text-slate-500'>Vehicle Type:</span> <p class='text-white font-bold'>${p.vehicle.type}</p></div>
             <div><span class='text-slate-500'>Plate:</span> <p class='text-white font-mono font-bold uppercase'>${p.vehicle.plate}</p></div>
             <div><span class='text-slate-500'>Make/Model:</span> <p class='text-white'>${p.vehicle.make} ${p.vehicle.model}</p></div>
             <div><span class='text-slate-500'>Year/Color:</span> <p class='text-white'>${p.vehicle.year || '2023'} · ${p.vehicle.color || 'Standard'}</p></div>
@@ -403,26 +436,38 @@ class OnboardingState {
 
         <!-- Verified Documents & Compliance -->
         <div class='bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/60'>
-          <h4 class='text-[11px] font-bold text-emerald-400 uppercase mb-2'>3. Documents & Compliance</h4>
+          <div class='flex items-center gap-1.5 text-emerald-400 text-[11px] font-bold uppercase mb-2'>
+            <i data-lucide='shield-check' class='w-3.5 h-3.5'></i>
+            <span>3. Documents & Compliance</span>
+          </div>
           <div class='space-y-2 text-[11px]'>
             <div class='flex items-center justify-between p-2 bg-slate-900/80 rounded-lg'>
-              <div>
-                <p class='font-bold text-white'>National ID (${p.identity.idNumber})</p>
-                <p class='text-[10px] text-emerald-400'>✓ Biometric OCR verified · ${p.identity.compressionSize || '342 KB'}</p>
+              <div class='flex items-center gap-2'>
+                <i data-lucide='credit-card' class='w-4 h-4 text-emerald-400'></i>
+                <div>
+                  <p class='font-bold text-white'>National ID (${p.identity.idNumber})</p>
+                  <p class='text-[10px] text-emerald-400'>Biometric OCR verified · ${p.identity.compressionSize || '342 KB'}</p>
+                </div>
               </div>
               <span class='text-emerald-400 font-bold'>Verified</span>
             </div>
             <div class='flex items-center justify-between p-2 bg-slate-900/80 rounded-lg'>
-              <div>
-                <p class='font-bold text-white'>Driver License (${p.documents.licenseNumber})</p>
-                <p class='text-[10px] text-emerald-400'>✓ ${p.documents.licenseClass} · Valid until ${p.documents.expiry || '2028'}</p>
+              <div class='flex items-center gap-2'>
+                <i data-lucide='file-badge' class='w-4 h-4 text-emerald-400'></i>
+                <div>
+                  <p class='font-bold text-white'>Driver License (${p.documents.licenseNumber})</p>
+                  <p class='text-[10px] text-emerald-400'>${p.documents.licenseClass} · Valid until ${p.documents.expiry || '2028'}</p>
+                </div>
               </div>
               <span class='text-emerald-400 font-bold'>Active</span>
             </div>
             <div class='flex items-center justify-between p-2 bg-slate-900/80 rounded-lg'>
-              <div>
-                <p class='font-bold text-white'>Road Insurance Policy</p>
-                <p class='text-[10px] text-emerald-400'>✓ Policy #${p.documents.insurancePolicy}</p>
+              <div class='flex items-center gap-2'>
+                <i data-lucide='shield' class='w-4 h-4 text-emerald-400'></i>
+                <div>
+                  <p class='font-bold text-white'>Road Insurance Policy</p>
+                  <p class='text-[10px] text-emerald-400'>Policy #${p.documents.insurancePolicy}</p>
+                </div>
               </div>
               <span class='text-emerald-400 font-bold'>Active</span>
             </div>
@@ -430,6 +475,8 @@ class OnboardingState {
         </div>
       </div>
     `;
+
+    if (window.lucide) window.lucide.createIcons();
   }
 
   render() {
@@ -481,7 +528,7 @@ class OnboardingState {
   }
 
   // -------------------------------------------------------------------------
-  // 0. SPLASH SCREEN (Driven UI Visuals)
+  // 0. SPLASH SCREEN (Driven UI Visuals — Zero Emojis)
   // -------------------------------------------------------------------------
   renderSplash() {
     return `
@@ -490,7 +537,7 @@ class OnboardingState {
           <div class='flex items-center justify-between mb-5'>
             <div class='flex items-center gap-2'>
               <div class='w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white font-black text-sm shadow-sm'>
-                ⚡
+                <i data-lucide='zap' class='w-4 h-4'></i>
               </div>
               <span class='font-extrabold tracking-tight text-xl text-slate-900'>TakeOFF</span>
               <span class='text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold tracking-wide uppercase'>Fleet</span>
@@ -499,8 +546,8 @@ class OnboardingState {
           </div>
 
           <div class='relative bg-gradient-to-b from-emerald-50 to-teal-50/50 rounded-3xl p-6 border border-emerald-100/80 flex flex-col items-center justify-center mb-6 overflow-hidden text-center'>
-            <div class='w-24 h-24 rounded-full bg-emerald-500/10 flex items-center justify-center text-5xl mb-4 shadow-inner ring-4 ring-emerald-500/10 animate-bounce'>
-              🛵
+            <div class='w-20 h-20 rounded-2xl bg-emerald-500/15 text-emerald-600 flex items-center justify-center mb-4 shadow-inner ring-4 ring-emerald-500/10'>
+              <i data-lucide='navigation' class='w-10 h-10 text-emerald-600'></i>
             </div>
             <span class='px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-800 text-[11px] font-extrabold tracking-wide uppercase mb-2'>
               TakeOFF Driver Partner
@@ -509,23 +556,27 @@ class OnboardingState {
               Drive with Freedom.<br>Earn On Every Delivery.
             </h2>
             <p class='text-xs text-slate-600 max-w-xs leading-relaxed'>
-              Join Zimbabwe's fastest-growing on-demand dispatch network. Get instant daily payouts & flexible schedules.
+              Join Zimbabwe's premier on-demand delivery network. Enjoy instant daily payouts and flexible schedules.
             </p>
           </div>
 
-          <!-- Feature Highlights Carousel Pills -->
+          <!-- Feature Highlights with Vector Icons -->
           <div class='space-y-2.5 mb-6'>
             <div class='flex items-center gap-3 p-3 bg-white rounded-2xl border border-slate-100 shadow-sm'>
-              <div class='w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm'>💵</div>
+              <div class='w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm'>
+                <i data-lucide='wallet' class='w-4 h-4 text-emerald-600'></i>
+              </div>
               <div class='text-left'>
                 <h4 class='text-xs font-bold text-slate-900'>Instant EcoCash & InnBucks Payouts</h4>
                 <p class='text-[11px] text-slate-500'>Cash out your earnings directly to your mobile wallet daily.</p>
               </div>
             </div>
             <div class='flex items-center gap-3 p-3 bg-white rounded-2xl border border-slate-100 shadow-sm'>
-              <div class='w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm'>📍</div>
+              <div class='w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm'>
+                <i data-lucide='map-pin' class='w-4 h-4 text-emerald-600'></i>
+              </div>
               <div class='text-left'>
-                <h4 class='text-xs font-bold text-slate-900'>Harare & Bulawayo City Coverage</h4>
+                <h4 class='text-xs font-bold text-slate-900'>Harare & Bulawayo Coverage</h4>
                 <p class='text-[11px] text-slate-500'>Dispatch routes optimized for minimal fuel and high order density.</p>
               </div>
             </div>
@@ -535,7 +586,7 @@ class OnboardingState {
         <div class='space-y-2 pt-2'>
           <button onclick="window.app.goTo('auth')" class='btn-primary'>
             <span>Sign Up to Drive</span>
-            <span>→</span>
+            <i data-lucide='arrow-right' class='w-4 h-4'></i>
           </button>
           <button onclick="window.app.goTo('auth')" class='btn-ghost'>
             <span>I already have an account</span>
@@ -552,8 +603,9 @@ class OnboardingState {
     return `
       <div class='animate-step flex flex-col justify-between h-full min-h-[600px]'>
         <div>
-          <button onclick="window.app.goTo('splash')" class='text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 mb-5'>
-            <span>← Back</span>
+          <button onclick="window.app.goTo('splash')" class='text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1.5 mb-5'>
+            <i data-lucide='arrow-left' class='w-3.5 h-3.5'></i>
+            <span>Back</span>
           </button>
 
           <div class='mb-6'>
@@ -567,7 +619,7 @@ class OnboardingState {
               <label class='block text-xs font-bold text-slate-700 mb-1.5'>Mobile Phone Number *</label>
               <div class='flex items-center rounded-2xl border-2 border-slate-200 bg-slate-50 focus-within:border-emerald-500 focus-within:bg-white transition overflow-hidden p-1'>
                 <div class='flex items-center gap-1.5 px-3 py-2 border-r border-slate-200 text-xs font-bold text-slate-700'>
-                  <span>🇿🇼</span>
+                  <span class='px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold'>ZW</span>
                   <span>+263</span>
                 </div>
                 <input type='tel' id='auth-phone' value='0712599823' placeholder='71 259 9823' class='w-full px-3 py-2 text-sm font-bold text-slate-900 bg-transparent outline-none' />
@@ -577,28 +629,30 @@ class OnboardingState {
             <div>
               <label class='block text-xs font-bold text-slate-700 mb-2'>Choose OTP Channel</label>
               <div class='grid grid-cols-2 gap-2.5'>
-                <label class='flex items-center gap-2.5 p-3 rounded-xl border-2 border-emerald-500 bg-emerald-50/50 cursor-pointer text-xs font-bold text-slate-900'>
+                <label class='flex items-center gap-2 p-3 rounded-xl border-2 border-emerald-500 bg-emerald-50/50 cursor-pointer text-xs font-bold text-slate-900'>
                   <input type='radio' name='otp-channel' value='whatsapp' checked class='accent-emerald-600' />
-                  <span>💬 WhatsApp</span>
+                  <i data-lucide='message-square' class='w-4 h-4 text-emerald-600'></i>
+                  <span>WhatsApp</span>
                 </label>
-                <label class='flex items-center gap-2.5 p-3 rounded-xl border-2 border-slate-200 bg-white cursor-pointer text-xs font-bold text-slate-700 hover:border-slate-300'>
+                <label class='flex items-center gap-2 p-3 rounded-xl border-2 border-slate-200 bg-white cursor-pointer text-xs font-bold text-slate-700 hover:border-slate-300'>
                   <input type='radio' name='otp-channel' value='sms' class='accent-emerald-600' />
-                  <span>📩 SMS Text</span>
+                  <i data-lucide='smartphone' class='w-4 h-4 text-slate-500'></i>
+                  <span>SMS Text</span>
                 </label>
               </div>
             </div>
           </div>
 
-          <div class='bg-emerald-50/60 p-3 rounded-2xl border border-emerald-100/80 text-[11px] text-emerald-800 flex items-start gap-2'>
-            <span>💡</span>
-            <span>Tip: We have prefilled your registered test candidate phone <strong>+263 712 599 823</strong>.</span>
+          <div class='bg-emerald-50/70 p-3 rounded-2xl border border-emerald-100/80 text-[11px] text-emerald-800 flex items-start gap-2'>
+            <i data-lucide='info' class='w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5'></i>
+            <span>Registered candidate phone <strong>+263 712 599 823</strong> prefilled for assessment test.</span>
           </div>
         </div>
 
         <div class='pt-6'>
           <button id='btn-send-otp' class='btn-primary'>
             <span>Send Verification Code</span>
-            <span>→</span>
+            <i data-lucide='arrow-right' class='w-4 h-4'></i>
           </button>
         </div>
       </div>
@@ -623,8 +677,9 @@ class OnboardingState {
     return `
       <div class='animate-step flex flex-col justify-between h-full min-h-[600px]'>
         <div>
-          <button onclick="window.app.goTo('auth')" class='text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 mb-5'>
-            <span>← Change Phone</span>
+          <button onclick="window.app.goTo('auth')" class='text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1.5 mb-5'>
+            <i data-lucide='arrow-left' class='w-3.5 h-3.5'></i>
+            <span>Change Phone</span>
           </button>
 
           <div class='mb-6'>
@@ -656,7 +711,7 @@ class OnboardingState {
         <div class='pt-6'>
           <button id='btn-verify-otp' class='btn-primary'>
             <span>Verify & Continue</span>
-            <span>→</span>
+            <i data-lucide='arrow-right' class='w-4 h-4'></i>
           </button>
         </div>
       </div>
@@ -713,11 +768,11 @@ class OnboardingState {
             <div class='grid grid-cols-2 gap-2'>
               <div>
                 <label class='block text-xs font-bold text-slate-700 mb-1'>Email Address *</label>
-                <input type='email' id='p-email' value='${this.draft.email}' class='w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 bg-slate-50 focus:bg-white focus:border-emerald-500 outline-none transition' />
+                <input type='email' id='p-email' value='${this.draft.email}' class='w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 bg-slate-50 focus:bg-white focus:border-emerald-500 outline-none transition' />
               </div>
               <div>
                 <label class='block text-xs font-bold text-slate-700 mb-1'>Date of Birth *</label>
-                <input type='date' id='p-dob' value='${this.draft.dob}' class='w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 bg-slate-50 focus:bg-white focus:border-emerald-500 outline-none transition' />
+                <input type='date' id='p-dob' value='${this.draft.dob}' class='w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 bg-slate-50 focus:bg-white focus:border-emerald-500 outline-none transition' />
               </div>
             </div>
 
@@ -746,7 +801,7 @@ class OnboardingState {
           <button onclick="window.app.goTo('otp')" class='btn-ghost w-1/3'>Back</button>
           <button id='btn-next-step1' class='btn-primary w-2/3'>
             <span>Next: Identity</span>
-            <span>→</span>
+            <i data-lucide='arrow-right' class='w-4 h-4'></i>
           </button>
         </div>
       </div>
@@ -807,10 +862,15 @@ class OnboardingState {
               <div class='upload-dropzone has-file'>
                 <div class='flex items-center justify-between'>
                   <div class='flex items-center gap-2.5'>
-                    <div class='w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs'>🪪</div>
+                    <div class='w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs'>
+                      <i data-lucide='credit-card' class='w-4 h-4'></i>
+                    </div>
                     <div class='text-left'>
                       <p class='text-xs font-bold text-slate-800'>national_id_front.webp</p>
-                      <p class='text-[10px] text-emerald-600 font-semibold'>✓ Auto-Compressed (342 KB) · OCR Verified</p>
+                      <p class='text-[10px] text-emerald-600 font-semibold flex items-center gap-1'>
+                        <i data-lucide='check' class='w-3 h-3'></i>
+                        <span>Auto-Compressed (342 KB) · OCR Verified</span>
+                      </p>
                     </div>
                   </div>
                   <span class='text-xs text-emerald-600 font-bold'>Uploaded</span>
@@ -824,10 +884,15 @@ class OnboardingState {
               <div class='upload-dropzone has-file'>
                 <div class='flex items-center justify-between'>
                   <div class='flex items-center gap-2.5'>
-                    <div class='w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs'>🪪</div>
+                    <div class='w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs'>
+                      <i data-lucide='credit-card' class='w-4 h-4'></i>
+                    </div>
                     <div class='text-left'>
                       <p class='text-xs font-bold text-slate-800'>national_id_back.webp</p>
-                      <p class='text-[10px] text-emerald-600 font-semibold'>✓ Auto-Compressed (289 KB) · Barcode Matched</p>
+                      <p class='text-[10px] text-emerald-600 font-semibold flex items-center gap-1'>
+                        <i data-lucide='check' class='w-3 h-3'></i>
+                        <span>Auto-Compressed (289 KB) · Barcode Matched</span>
+                      </p>
                     </div>
                   </div>
                   <span class='text-xs text-emerald-600 font-bold'>Uploaded</span>
@@ -841,7 +906,7 @@ class OnboardingState {
           <button onclick="window.app.goTo('step1')" class='btn-ghost w-1/3'>Back</button>
           <button id='btn-next-step2' class='btn-primary w-2/3'>
             <span>Next: Vehicle</span>
-            <span>→</span>
+            <i data-lucide='arrow-right' class='w-4 h-4'></i>
           </button>
         </div>
       </div>
@@ -860,14 +925,14 @@ class OnboardingState {
   }
 
   // -------------------------------------------------------------------------
-  // 5. STEP 3 - VEHICLE SELECTION (Driven Visual Aesthetic)
+  // 5. STEP 3 - VEHICLE SELECTION (Driven Visual Aesthetic — Lucide Icons)
   // -------------------------------------------------------------------------
   renderStep3() {
     const vehicles = [
-      { id: 'Motorbike', icon: '🛵', name: 'Motorbike Courier', desc: 'Fast parcels & food (Up to 25kg)' },
-      { id: 'Courier Car', icon: '🚗', name: 'Courier Car (Sedan)', desc: 'Cartons & passenger dispatch (Up to 150kg)' },
-      { id: 'Delivery Van', icon: '🚐', name: 'Delivery Van', desc: 'Commercial freight & appliances (Up to 1.2t)' },
-      { id: 'Cargo Truck', icon: '🚚', name: 'Light Cargo Truck', desc: 'Pallet logistics & heavy cargo (3t - 5t)' }
+      { id: 'Motorbike', iconName: 'bike', name: 'Motorbike Courier', desc: 'Fast parcels & food (Up to 25kg)' },
+      { id: 'Courier Car', iconName: 'car', name: 'Courier Car (Sedan)', desc: 'Cartons & passenger dispatch (Up to 150kg)' },
+      { id: 'Delivery Van', iconName: 'truck', name: 'Delivery Van', desc: 'Commercial freight & appliances (Up to 1.2t)' },
+      { id: 'Cargo Truck', iconName: 'container', name: 'Light Cargo Truck', desc: 'Pallet logistics & heavy cargo (3t - 5t)' }
     ];
 
     return `
@@ -888,13 +953,17 @@ class OnboardingState {
             ${vehicles.map(v => `
               <div class='vehicle-card ${this.draft.vehicleType === v.id ? 'active' : ''}' data-vehicle='${v.id}'>
                 <div class='flex items-center gap-3'>
-                  <span class='text-2xl'>${v.icon}</span>
+                  <div class='w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100'>
+                    <i data-lucide='${v.iconName}' class='w-5 h-5'></i>
+                  </div>
                   <div>
                     <h4 class='text-xs font-bold text-slate-900'>${v.name}</h4>
                     <p class='text-[11px] text-slate-500'>${v.desc}</p>
                   </div>
                 </div>
-                <div class='check-circle'>✓</div>
+                <div class='check-circle'>
+                  <i data-lucide='check' class='w-3 h-3'></i>
+                </div>
               </div>
             `).join('')}
           </div>
@@ -915,7 +984,7 @@ class OnboardingState {
           <button onclick="window.app.goTo('step2')" class='btn-ghost w-1/3'>Back</button>
           <button id='btn-next-step3' class='btn-primary w-2/3'>
             <span>Next: Documents</span>
-            <span>→</span>
+            <i data-lucide='arrow-right' class='w-4 h-4'></i>
           </button>
         </div>
       </div>
@@ -980,10 +1049,15 @@ class OnboardingState {
               <div class='upload-dropzone has-file'>
                 <div class='flex items-center justify-between'>
                   <div class='flex items-center gap-2.5'>
-                    <div class='w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs'>📄</div>
+                    <div class='w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs'>
+                      <i data-lucide='file-badge' class='w-4 h-4'></i>
+                    </div>
                     <div class='text-left'>
                       <p class='text-xs font-bold text-slate-800'>driver_license_scan.webp</p>
-                      <p class='text-[10px] text-emerald-600 font-semibold'>✓ Verified · Valid until 2028</p>
+                      <p class='text-[10px] text-emerald-600 font-semibold flex items-center gap-1'>
+                        <i data-lucide='check' class='w-3 h-3'></i>
+                        <span>Verified · Valid until 2028</span>
+                      </p>
                     </div>
                   </div>
                   <span class='text-xs text-emerald-600 font-bold'>Uploaded</span>
@@ -996,10 +1070,15 @@ class OnboardingState {
               <div class='upload-dropzone has-file'>
                 <div class='flex items-center justify-between'>
                   <div class='flex items-center gap-2.5'>
-                    <div class='w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs'>🛡️</div>
+                    <div class='w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs'>
+                      <i data-lucide='shield-check' class='w-4 h-4'></i>
+                    </div>
                     <div class='text-left'>
                       <p class='text-xs font-bold text-slate-800'>zimnat_third_party_cert.pdf</p>
-                      <p class='text-[10px] text-emerald-600 font-semibold'>✓ Policy active · Policy #ZIMNAT-94821</p>
+                      <p class='text-[10px] text-emerald-600 font-semibold flex items-center gap-1'>
+                        <i data-lucide='check' class='w-3 h-3'></i>
+                        <span>Policy active · Policy #ZIMNAT-94821</span>
+                      </p>
                     </div>
                   </div>
                   <span class='text-xs text-emerald-600 font-bold'>Uploaded</span>
@@ -1013,7 +1092,7 @@ class OnboardingState {
           <button onclick="window.app.goTo('step3')" class='btn-ghost w-1/3'>Back</button>
           <button id='btn-next-step4' class='btn-primary w-2/3'>
             <span>Review Application</span>
-            <span>→</span>
+            <i data-lucide='arrow-right' class='w-4 h-4'></i>
           </button>
         </div>
       </div>
@@ -1040,7 +1119,10 @@ class OnboardingState {
         <div>
           <div class='flex items-center justify-between mb-3'>
             <span class='step-indicator-pill'>Final Review</span>
-            <span class='text-xs font-bold text-emerald-600'>Ready to Submit</span>
+            <span class='text-xs font-bold text-emerald-600 flex items-center gap-1'>
+              <i data-lucide='check-circle' class='w-3.5 h-3.5'></i>
+              <span>Ready to Submit</span>
+            </span>
           </div>
 
           <div class='mb-4'>
@@ -1081,7 +1163,10 @@ class OnboardingState {
             <div class='p-3 rounded-2xl bg-white border border-slate-200'>
               <div class='flex items-center justify-between mb-1.5'>
                 <span class='text-[10px] font-bold text-slate-500 uppercase'>Digital Signature *</span>
-                <button id='btn-clear-sig' class='text-[10px] font-bold text-slate-400 hover:text-slate-700'>Clear</button>
+                <button id='btn-clear-sig' class='text-[10px] font-bold text-slate-400 hover:text-slate-700 flex items-center gap-1'>
+                  <i data-lucide='rotate-ccw' class='w-3 h-3'></i>
+                  <span>Clear</span>
+                </button>
               </div>
               <canvas id='signature-pad' class='signature-canvas' width='380' height='100'></canvas>
               <p class='text-[10px] text-slate-400 mt-1 text-center'>Draw your signature above</p>
@@ -1099,7 +1184,7 @@ class OnboardingState {
           <button onclick="window.app.goTo('step4')" class='btn-ghost w-1/3'>Back</button>
           <button id='btn-submit-application' class='btn-primary w-2/3'>
             <span>Submit Application</span>
-            <span>→</span>
+            <i data-lucide='arrow-right' class='w-4 h-4'></i>
           </button>
         </div>
       </div>
@@ -1115,7 +1200,7 @@ class OnboardingState {
       ctx.lineCap = 'round';
       ctx.strokeStyle = '#0F172A';
 
-      // Default nice sample signature stroke
+      // Default sample signature stroke
       ctx.beginPath();
       ctx.moveTo(40, 60);
       ctx.bezierCurveTo(70, 20, 110, 80, 150, 45);
@@ -1176,7 +1261,7 @@ class OnboardingState {
           },
           vehicle: {
             type: this.draft.vehicleType,
-            icon: this.draft.vehicleType === 'Motorbike' ? '🛵' : this.draft.vehicleType === 'Delivery Van' ? '🚐' : this.draft.vehicleType === 'Cargo Truck' ? '🚚' : '🚗',
+            iconName: this.getVehicleIcon(this.draft.vehicleType),
             make: this.draft.vehicleMake,
             model: this.draft.vehicleModel,
             year: this.draft.vehicleYear,
@@ -1204,15 +1289,15 @@ class OnboardingState {
   }
 
   // -------------------------------------------------------------------------
-  // 8. CELEBRATION / CONFIRMATION SCREEN
+  // 8. CELEBRATION / CONFIRMATION SCREEN (Zero Emojis)
   // -------------------------------------------------------------------------
   renderCelebration() {
     const refId = this.lastSubmittedId || 'TKF-DRV-8429';
     return `
       <div class='animate-step flex flex-col justify-between h-full min-h-[600px] text-center'>
         <div>
-          <div class='w-20 h-20 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center text-4xl mx-auto mb-4 ring-8 ring-emerald-500/10'>
-            🎉
+          <div class='w-20 h-20 rounded-3xl bg-emerald-500/15 text-emerald-600 flex items-center justify-center mx-auto mb-4 ring-8 ring-emerald-500/10 shadow-sm'>
+            <i data-lucide='check-circle-2' class='w-10 h-10 text-emerald-600'></i>
           </div>
 
           <span class='px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-extrabold tracking-wide uppercase inline-block mb-2'>
@@ -1220,12 +1305,12 @@ class OnboardingState {
           </span>
 
           <h2 class='text-2xl font-extrabold text-slate-900 mb-2'>Welcome to TakeOFF Fleet!</h2>
-          <p class='text-xs text-slate-500 max-w-xs mx-auto mb-4'>
+          <p class='text-xs text-slate-500 max-w-xs mx-auto mb-4 leading-relaxed'>
             Your driver profile and vehicle documentation have been securely recorded in the fleet database.
           </p>
 
           <div class='p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 mb-5 max-w-xs mx-auto'>
-            <span class='text-[10px] text-slate-400 uppercase font-bold block'>Application Reference ID</span>
+            <span class='text-[10px] text-slate-400 uppercase font-bold block mb-0.5'>Application Reference ID</span>
             <span class='text-lg font-mono font-black text-emerald-600 tracking-wider'>${refId}</span>
           </div>
 
@@ -1236,7 +1321,7 @@ class OnboardingState {
               <div class='w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-xs flex items-center justify-center font-bold'>1</div>
               <div>
                 <h5 class='text-xs font-bold text-slate-800'>Document Verification</h5>
-                <p class='text-[10px] text-slate-500'>Our compliance team checks your ID & vehicle roadworthy.</p>
+                <p class='text-[10px] text-slate-500'>Our compliance team verifies your ID & vehicle roadworthy.</p>
               </div>
             </div>
             <div class='flex items-start gap-3'>
@@ -1259,7 +1344,7 @@ class OnboardingState {
         <div class='space-y-2 pt-2'>
           <button id='btn-open-reviewer-from-done' class='btn-primary'>
             <span>View in Reviewer Console</span>
-            <span>→</span>
+            <i data-lucide='arrow-right' class='w-4 h-4'></i>
           </button>
           <button onclick="window.app.goTo('splash')" class='btn-ghost'>
             <span>Submit Another Test Application</span>

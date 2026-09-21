@@ -1,0 +1,330 @@
+/* ==========================================================================
+   TakeOFF Driver Onboarding — "Driven" Theme Stylesheet
+   Palette: Mint / Emerald #10B981, Dark Slate #0F172A, Border #E2E8F0
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
+
+:root {
+  --primary: #10B981;
+  --primary-hover: #059669;
+  --primary-active: #047857;
+  --primary-light: #ECFDF5;
+  --primary-glow: rgba(16, 185, 129, 0.25);
+  --dark: #0F172A;
+  --slate-600: #475569;
+  --slate-400: #94A3B8;
+  --bg-page: #F8FAFC;
+  --card-bg: #FFFFFF;
+  --card-border: #E2E8F0;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #F1F5F9;
+  color: var(--dark);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Responsive Phone Frame */
+.phone-frame {
+  width: 100%;
+  max-width: 440px;
+  min-height: 720px;
+  margin: 0 auto;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 2rem;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.12),
+              0 0 0 1px rgba(15, 23, 42, 0.03);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  transition: max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.3s ease;
+  padding: 1.5rem;
+}
+
+.phone-frame.full-width-mode {
+  max-width: 760px;
+  border-radius: 1.5rem;
+  padding: 2rem;
+}
+
+/* Stepper & Progress Headers */
+.stepper-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.step-indicator-pill {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  background: #ECFDF5;
+  color: #059669;
+  border: 1px solid #A7F3D0;
+}
+
+.progress-track {
+  width: 100%;
+  height: 6px;
+  background: #E2E8F0;
+  border-radius: 9999px;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #10B981, #059669);
+  border-radius: 9999px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+
+/* Vehicle Selection Cards (Driven UI) */
+.vehicle-card {
+  padding: 1rem 1.1rem;
+  border: 2px solid #E2E8F0;
+  border-radius: 1.25rem;
+  background: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+.vehicle-card:hover {
+  border-color: #CBD5E1;
+  background: #F8FAFC;
+  transform: translateY(-1px);
+}
+.vehicle-card.active, .vehicle-card.selected {
+  border-color: var(--primary);
+  background: linear-gradient(180deg, #ECFDF5 0%, #FFFFFF 100%);
+  box-shadow: 0 8px 16px -4px rgba(16, 185, 129, 0.15);
+}
+.vehicle-card .check-circle {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 9999px;
+  border: 2px solid #CBD5E1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: transparent;
+  transition: all 0.2s ease;
+}
+.vehicle-card.active .check-circle, .vehicle-card.selected .check-circle {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #FFFFFF;
+}
+
+/* Upload Dropzones */
+.upload-dropzone {
+  border: 2px dashed #CBD5E1;
+  border-radius: 1.25rem;
+  padding: 1.25rem 1rem;
+  background: #F8FAFC;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+.upload-dropzone:hover {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+.upload-dropzone.has-file, .upload-dropzone.uploaded {
+  border: 2px solid var(--primary);
+  background: #F0FDF4;
+}
+
+/* Buttons */
+.btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.9rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  border: none;
+  border-radius: 1rem;
+  cursor: pointer;
+  box-shadow: 0 8px 20px -4px rgba(16, 185, 129, 0.4),
+              0 2px 4px -1px rgba(16, 185, 129, 0.2);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px -4px rgba(16, 185, 129, 0.45);
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--dark);
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  border-radius: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-secondary:hover {
+  background: #E2E8F0;
+}
+
+.btn-ghost {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--slate-600);
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  border-radius: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-ghost:hover {
+  color: var(--dark);
+  background: #E2E8F0;
+}
+
+/* OTP Input Boxes */
+.otp-box {
+  width: 3rem;
+  height: 3.5rem;
+  border: 2px solid #E2E8F0;
+  border-radius: 1rem;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0F172A;
+  background: #F8FAFC;
+  outline: none;
+  transition: all 0.2s ease;
+}
+.otp-box:focus {
+  border-color: var(--primary);
+  background: #FFFFFF;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+}
+
+/* Reviewer Drawer / Admin Panel */
+.reviewer-drawer {
+  position: fixed;
+  top: 0;
+  right: -560px;
+  width: 100%;
+  max-width: 540px;
+  height: 100vh;
+  background: #0F172A;
+  color: #F8FAFC;
+  box-shadow: -15px 0 40px rgba(0, 0, 0, 0.3);
+  z-index: 50;
+  transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+}
+.reviewer-drawer.open {
+  right: 0;
+}
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(6px);
+  z-index: 45;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.drawer-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Signature Pad Canvas */
+.signature-canvas {
+  width: 100%;
+  height: 120px;
+  border: 1.5px dashed #CBD5E1;
+  border-radius: 1rem;
+  background: #FFFFFF;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+/* Step Fade In Animation */
+@keyframes stepIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-step {
+  animation: stepIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
